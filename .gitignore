@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+.Rproj.user
+
+*.Rproj
+
+# Bigger datasets
+/data/*merged.csv

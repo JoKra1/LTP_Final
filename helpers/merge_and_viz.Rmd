@@ -1,0 +1,96 @@
+---
+title: "Merge & Visualize"
+date: "5/31/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(wordcloud)
+library(tm)
+library(RColorBrewer)
+```
+
+# Merge
+
+```{r}
+ind_files <- list.files("../data")
+merged_files <- NULL
+for (file in ind_files) {
+  file <- ind_files[1]
+  # Some checks
+  valid <- grep("^IRAhandle_tweets_[1-9]+.csv$",file)
+  if (length(valid) == 1) {
+    ind_dat <- read.csv(paste0("../data/",file[valid]),sep=",")
+    merged_files <- rbind(merged_files,ind_dat)
+  }
+  
+}
+
+write.csv(merged_files,"../data/merged.csv",sep=",",row.names = F)
+```
+
+# Column formatting
+
+```{r}
+# Change label and language columns to factors
+merged_files$account_category <- as.factor(merged_files$account_category)
+merged_files$account_type <- as.factor(merged_files$account_type)
+merged_files$language <- as.factor(merged_files$language)
+```
+
+# Data summary
+
+```{r}
+# What labels are there
+levels(merged_files$account_category)
+levels(merged_files$account_type)
+
+# What languages are there
+levels(merged_files$language)
+```
+
+```{r}
+set.seed(0)
+reduced_data <- merged_files[,c("language",
+                                "content",
+                                "account_type",
+                                "account_category")]
+# Total summary
+summary(reduced_data)
+
+# Per category summaries + word-clouds
+# Source for word-cloud code:
+# https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a
+
+for (cat in levels(reduced_data$account_category)) {
+  sub_dat <- reduced_data[reduced_data$account_category == cat,]
+  sub_dat <- sub_dat[sample(nrow(sub_dat)),] # Randomize
+  
+  # word-cloud struggles with some emojis and graphical characters
+  # so make sure everything is converted to UTF-8 or ascii.
+  # See:
+  # https://stackoverflow.com/questions/9637278/r-tm-package-invalid-input-in-utf8towcs
+  
+  sub_dat$content <- iconv(sub_dat$content, 'UTF-8', 'ASCII')
+  
+  print(paste0("----- ", cat, " -----"))
+  print(summary(sub_dat))
+  
+  # word cloud
+  corpus <- Corpus(VectorSource(sub_dat[1:5000,"content"]))
+  
+  dtm <- TermDocumentMatrix(corpus) 
+  matrix <- as.matrix(dtm) 
+  words <- sort(rowSums(matrix),decreasing=TRUE) 
+  df <- data.frame(word = names(words),freq=words)
+  
+  
+  wordcloud(words = df$word, freq = df$freq, min.freq = 10,
+            max.words=100, random.order=FALSE, rot.per=0.35,
+            colors=brewer.pal(8, "Dark2"),scale = c(1.5,0.5))
+  
+  rm(corpus,dtm,matrix,words,df)
+
+}
+```
