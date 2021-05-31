@@ -76,6 +76,8 @@ for (cat in levels(reduced_data$account_category)) {
   
   print(paste0("----- ", cat, " -----"))
   print(summary(sub_dat))
+  print(length(sub_dat$language[sub_dat$language == "Russian"]))
+  print(length(sub_dat$language[sub_dat$language == "German"]))
   
   # word cloud
   corpus <- Corpus(VectorSource(sub_dat[1:5000,"content"]))
@@ -93,4 +95,61 @@ for (cat in levels(reduced_data$account_category)) {
   rm(corpus,dtm,matrix,words,df)
 
 }
+```
+
+# Subset for training, validation, test
+
+```{r}
+# Drop everything un-necessary
+set.seed(0) # twice is better, I am sure.
+
+sub_dat <- merged_files[merged_files$language %in% c("English",
+                                                     "Russian",
+                                                     "German"),]
+
+sub_dat <- sub_dat[,c("account_category","content","language")]
+
+sub_dat <- sub_dat[sub_dat$account_category %in% c("RightTroll",
+                                                   "NewsFeed",
+                                                   "NonEnglish",
+                                                   "LeftTroll"),]
+
+# Drop NonEnglish column for general train, dev, test split since
+# it is only needed for embeddings
+
+sub_dat_class <- sub_dat[sub_dat$account_category != "NonEnglish",]
+
+# Language specific split to ensure 60/20/20 for each language
+
+sub_dat_eng <- sub_dat_class[sub_dat_class$language == "English",]
+sub_dat_rus <- sub_dat_class[sub_dat_class$language == "Russian",]
+sub_dat_ger <- sub_dat_class[sub_dat_class$language == "German",]
+
+# Randomize
+sub_dat_eng <- sub_dat_eng[sample(nrow(sub_dat_eng)),]
+sub_dat_rus <- sub_dat_rus[sample(nrow(sub_dat_rus)),]
+sub_dat_ger <- sub_dat_ger[sample(nrow(sub_dat_ger)),]
+
+# Split
+train_eng <- sub_dat_eng[1:floor(0.6 * nrow(sub_dat_eng)),]
+val_eng <- sub_dat_eng[(floor(0.6 * nrow(sub_dat_eng)) + 1): floor(0.8 * nrow(sub_dat_eng)),]
+test_eng <- sub_dat_eng[(floor(0.8 * nrow(sub_dat_eng)) + 1): nrow(sub_dat_eng),]
+
+train_rus <- sub_dat_rus[1:floor(0.6 * nrow(sub_dat_rus)),]
+val_rus <- sub_dat_rus[(floor(0.6 * nrow(sub_dat_rus)) + 1): floor(0.8 * nrow(sub_dat_rus)),]
+test_rus <- sub_dat_rus[(floor(0.8 * nrow(sub_dat_rus)) + 1): nrow(sub_dat_rus),]
+
+train_ger <- sub_dat_ger[1:floor(0.6 * nrow(sub_dat_ger)),]
+val_ger <- sub_dat_ger[(floor(0.6 * nrow(sub_dat_ger)) + 1): floor(0.8 * nrow(sub_dat_ger)),]
+test_ger <- sub_dat_ger[(floor(0.8 * nrow(sub_dat_ger)) + 1): nrow(sub_dat_ger),]
+
+# Merge back
+train <- rbind(train_eng,train_rus,train_ger)
+val <- rbind(val_eng,val_rus,val_ger)
+test <- rbind(test_eng,test_rus,test_ger)
+
+# Write
+write.csv(train,"../data/train_merged.csv",sep=",",row.names = F)
+write.csv(val,"../data/val_merged.csv",sep=",",row.names = F)
+write.csv(test,"../data/test_merged.csv",sep=",",row.names = F)
 ```
