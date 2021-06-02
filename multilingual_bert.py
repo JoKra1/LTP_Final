@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from helpers import twitter_data_loader
-from dataloading import TwitterDataset, padding_collate_fn
+from twitter_data_loader import TwitterDataset, padding_collate_fn
 from torch.utils.data import DataLoader 
 from transformers import BertTokenizer, BertForMultipleChoice
 
