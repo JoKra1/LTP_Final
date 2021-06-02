@@ -11,7 +11,7 @@ class TwitterDataset(Dataset):
         #data_file = csv.reader(data_filepath, delimiter = ",")
         data = []
         labels = []
-        with open("data/train_merged.csv", newline="", encoding='utf8') as data_file:
+        with open(data_filepath, newline="", encoding='utf8') as data_file:
             reader = csv.reader(data_file, delimiter=",")
             for index, line in enumerate(reader):
                 if index == 0:
