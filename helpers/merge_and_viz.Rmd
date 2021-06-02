@@ -153,3 +153,37 @@ write.csv(train,"../data/train_merged.csv",sep=",",row.names = F)
 write.csv(val,"../data/val_merged.csv",sep=",",row.names = F)
 write.csv(test,"../data/test_merged.csv",sep=",",row.names = F)
 ```
+
+# Create sub-sets for embedding training:
+```{r}
+set.seed(0)
+# We need more data with russian and german tweets, so extract those
+# from the non-english category.
+sub_dat_non_eng <- sub_dat[sub_dat$account_category == "NonEnglish",]
+
+# Subsets
+sub_dat_non_eng_rus <- sub_dat_non_eng[sub_dat_non_eng$language == "Russian",]
+sub_dat_non_eng_ger <- sub_dat_non_eng[sub_dat_non_eng$language == "German",]
+
+# Shuffle
+sub_dat_non_eng_rus <- sub_dat_non_eng_rus[sample(nrow(sub_dat_non_eng_rus)),]
+sub_dat_non_eng_ger <- sub_dat_non_eng_ger[sample(nrow(sub_dat_non_eng_ger)),]
+
+# Only train/test split to maximize data
+train_rus_emb <- sub_dat_non_eng_rus[1:floor(0.75 * nrow(sub_dat_non_eng_rus)),]
+test_rus_emb <- sub_dat_non_eng_rus[(floor(0.75 * nrow(sub_dat_non_eng_rus)) + 1): nrow(sub_dat_non_eng_rus),]
+
+train_ger_emb <- sub_dat_non_eng_ger[1:floor(0.75 * nrow(sub_dat_non_eng_ger)),]
+test_ger_emb <- sub_dat_non_eng_ger[(floor(0.75 * nrow(sub_dat_non_eng_ger)) + 1): nrow(sub_dat_non_eng_ger),]
+
+# Drop some English tweets to achieve better balance
+train_eng_emb <- train_eng[1:480000,]
+test_eng_emb <- test_eng[1:150000,]
+
+train_emb <- rbind(train_eng_emb,train_rus_emb,train_ger_emb)
+test_emb <- rbind(test_eng_emb,test_rus_emb,test_ger_emb)
+
+write.csv(train_emb,"../data/train_emb_merged.csv",sep=",",row.names = F)
+write.csv(test_emb,"../data/test_emb_merged.csv",sep=",",row.names = F)
+```
+

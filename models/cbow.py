@@ -12,7 +12,7 @@ class CBOW(nn.Module):
     """
     def __init__(self, vocabulary_size, embedding_size, padding_idx=0):
         super(CBOW, self).__init__()
-
+        self.embedding_size = embedding_size
         self.embedding = nn.Embedding(num_embeddings=vocabulary_size,
         embedding_dim=embedding_size,
         padding_idx=padding_idx)

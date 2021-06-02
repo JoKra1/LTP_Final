@@ -6,7 +6,11 @@ from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset 
 
 class EmbeddingDataset(Dataset):
-    def __init__(self, data_filepath, tokenizer, window_size = 2,header=True):
+    """
+    Based on dataloading.py provided for assignment 4.
+    Modified to work for the CBOW model.
+    """
+    def __init__(self, data_filepath, tokenizer, window_size = 2,header=True, max_size = None):
         super().__init__()
 
         data = [] # target words
@@ -17,6 +21,9 @@ class EmbeddingDataset(Dataset):
             for index, line in enumerate(tqdm(reader)):
                 if index == 0 and header:
                     continue
+
+                if max_size and index > max_size:
+                    break
                 """
                 Use Bert encoder to transform to byte-pair and then to index
                 """
@@ -33,7 +40,6 @@ class EmbeddingDataset(Dataset):
                 Here for variable window size.
                 Source: https://pytorch.org/tutorials/beginner/nlp/word_embeddings_tutorial.html
                 """
-
                 for i in range(window_size, len(data_idxs) - window_size):
                     context = []
                     target = None
@@ -50,3 +56,9 @@ class EmbeddingDataset(Dataset):
                 
             self.data = np.array(data)
             self.labels = np.array(labels)
+    
+    def __getitem__(self, index):
+        return torch.Tensor(self.data[index]).long(), self.labels[index]
+
+    def __len__(self):
+        return len(self.data)
