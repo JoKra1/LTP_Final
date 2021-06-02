@@ -8,19 +8,22 @@ class TwitterDataset(Dataset):
     def __init__(self, data_filepath, tokenizer):
         super().__init__()
 
-        data_file = csv.reader(data_filepath, delimiter = ",")
+        #data_file = csv.reader(data_filepath, delimiter = ",")
         data = []
         labels = []
-        
-        for line in data_file:
-            """
-            row == line -> line[1] content, line[0] label
-            """
-            tokens = tokenizer.tokenize(line[1]) # Byte-pair
-            data_idxs = tokenizer.encode(line[1]) # maps bp to index
+        with open("data/train_merged.csv", newline="", encoding='utf8') as data_file:
+            reader = csv.reader(data_file, delimiter=",")
+            for index, line in enumerate(reader):
+                if index == 0:
+                    continue
+                """
+                row == line -> line[1] content, line[0] label
+                """
+                tokens = tokenizer.tokenize(line[1]) # Byte-pair
+                data_idxs = tokenizer.encode(line[1]) # maps bp to index
 
-            data.append(data_idxs) # we want indices
-            labels.append(line[0])
+                data.append(data_idxs) # we want indices
+                labels.append(line[0])
 
         self.data = np.array(data)
         self.labels = np.array(labels)
