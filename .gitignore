@@ -130,6 +130,10 @@ dmypy.json
 .Rproj.user
 
 *.Rproj
+.Rhistory
 
 # Bigger datasets
 /data/*merged.csv
+
+# Local test file
+test.py
