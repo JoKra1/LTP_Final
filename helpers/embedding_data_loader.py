@@ -2,10 +2,11 @@
 import torch
 import numpy as np
 import csv
+from tqdm import tqdm
 from torch.utils.data import DataLoader, Dataset 
 
 class EmbeddingDataset(Dataset):
-    def __init__(self, data_filepath, tokenizer, window_size = 2):
+    def __init__(self, data_filepath, tokenizer, window_size = 2,header=True):
         super().__init__()
 
         data = [] # target words
@@ -13,12 +14,19 @@ class EmbeddingDataset(Dataset):
 
         with open(data_filepath, newline="", encoding='utf8') as data_file:
             reader = csv.reader(data_file, delimiter=",")
-            for index, line in enumerate(reader):
+            for index, line in enumerate(tqdm(reader)):
+                if index == 0 and header:
+                    continue
                 """
                 Use Bert encoder to transform to byte-pair and then to index
                 """
                 tokens = tokenizer.tokenize(line[1]) # Byte-pair
-                data_idxs = tokenizer.encode(line[1]) # maps bp to index
+
+                # Padd first elements
+                for i in range(window_size):
+                    tokens.insert(0,'[PAD]')
+
+                data_idxs = tokenizer.convert_tokens_to_ids(tokens) # map tokens directly to indices (no CLS token)
 
                 """
                 Now prepare for cbow training, as shown in pytorch's embedding tutorial.
@@ -35,6 +43,7 @@ class EmbeddingDataset(Dataset):
                             target = data_idxs[context_index]
                         else:
                             context.append(data_idxs[context_index])
+                        context_index += 1
 
                     data.append(context)
                     labels.append(target)

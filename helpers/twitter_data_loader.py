@@ -3,6 +3,7 @@ import torch
 import numpy as np
 import csv
 from torch.utils.data import DataLoader, Dataset 
+from tqdm import tqdm
 
 class TwitterDataset(Dataset):
     def __init__(self, data_filepath, tokenizer):
@@ -13,7 +14,7 @@ class TwitterDataset(Dataset):
         labels = []
         with open(data_filepath, newline="", encoding='utf8') as data_file:
             reader = csv.reader(data_file, delimiter=",")
-            for index, line in enumerate(reader):
+            for index, line in enumerate(tqdm(reader)):
                 if index == 0:
                     continue
                 """
