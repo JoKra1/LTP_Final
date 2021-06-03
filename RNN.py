@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import torch.nn as nn
 
+batch_size = 32
+
 
 class RNN(nn.Module):
     
@@ -15,9 +17,9 @@ class RNN(nn.Module):
         
         super(RNN, self).__init__()
 
-        self.emb = nn.Embedding(input_dim, 400)
-        self.gru = nn.GRU(400, 100) # Haven't looked into good amount of nodes
-        self.den = nn.Dense(100, output_dim)
+        self.emb = nn.Embedding(input_dim, 2000) #The embeddings has 300 ## A hacky math method on the  internet said 2000 could be something
+        self.gru = nn.GRU(2000, 1000) # Haven't looked into good amount of nodes
+        self.den = nn.Dense(1000, output_dim)
 
     def forward(self, x):
         """The forward pass of the NN
@@ -32,7 +34,7 @@ class RNN(nn.Module):
         x = self.emb(x)
         x = self.gru(x)
         x = self.den(x)
-        x = F.log_softmax(x, dim=1)
+        x = F.softmax(x, dim=1)
 
         return x
 
@@ -49,52 +51,82 @@ class RNN(nn.Module):
 	tokenizer.do_basic_tokenize = False
 	'''
 
-    def load_data():
-	    train_dataset = TwitterDataset("data/train_merged.csv", tokenizer)
-		train_data = DataLoader(train_dataset,
-			shuffle = True,
-			collate_fn = padding_collate_fn,
-			batch_size = batch_size)
-	    val_dataset = TwitterDataset("data/val_merged.csv", tokenizer)
-		val_data = DataLoader(val_dataset,
-			collate_fn = padding_collate_fn,
-			batch_size = batch_size)
-	    test_dataset = TwitterDataset("data/test_merged.csv", tokenizer)
-		test_data = DataLoader(test_dataset,
+if __name__ == "__main__":
+	torch.manual_seed(0)
+	np.random.seed(0)
+
+	# load tokenizer
+	pretrained = 'bert-base-multilingual-cased'
+	tokenizer = BertTokenizer.from_pretrained(pretrained)
+	tokenizer.do_basic_tokenize = False
+	print("loading data...")
+
+	# load data
+	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer)
+	train_data = DataLoader(train_dataset,
+		shuffle = True,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
-		''' Idk what need from this yet and what not. 
-	    ### load data
-	    train_sents, train_y = load_animacy_sentences_and_labels(trainfile)
-	    dev_sents, dev_y = load_animacy_sentences_and_labels(devfile)
-	    test_sents, test_y = load_animacy_sentences_and_labels(testfile)
+	print("train loaded")
+	val_dataset = TwitterDataset("data/val_data.csv", tokenizer)
+	val_data = DataLoader(val_dataset,
+		collate_fn = padding_collate_fn,
+		batch_size = batch_size)
+	print("val loaded")
+	test_dataset = TwitterDataset("data/test_merged.csv", tokenizer)
+	test_data = DataLoader(test_dataset,
+		collate_fn = padding_collate_fn,
+		batch_size = batch_size)
+	print("Data has loaded")
 
-	    ### create mapping word to indices
-	    word2idx = {"_UNK": 0}  # reserve 0 for OOV
+	model = RNN(input_dim=tokenizer.vocab_size, output_dim=3)
 
-	    ### convert training etc data to indices
-	    X_train = [[get_index(w,word2idx) for w in x] for x in train_sents]
-	    freeze=True
-	    X_dev = [[get_index(w,word2idx,freeze) for w in x] for x in dev_sents]
-	    X_test = [[get_index(w,word2idx,freeze) for w in x] for x in test_sents]
-		
-	#    print(X_train[0])
+	criterion = nn.NLLLoss()
+	optimizer = optim.Adam(params=model.parameters())
 
-	    vocab_size = len(word2idx)
-	    print("#vocabulary size: {}".format(len(word2idx)))
-	    X_train = convert_to_n_hot(X_train, vocab_size)
-	    X_dev = convert_to_n_hot(X_dev, vocab_size)
-	    X_test = convert_to_n_hot(X_test, vocab_size)
+	#  Actual training
+	''' Though I don't actually know whether this is how that's done? I miss  tensorflow.
+	num_batches = len(X_train) // batch_size
+	print("#Batch size: {}, num batches: {}".format(size_batch, num_batches))
+	for epoch in range(10):
+	    epoch_loss = 0
+	    for batch in range(num_batches):
+	        batch_begin = batch*size_batch
+	        batch_end = (batch+1)*(size_batch)
+	        X_data = X_train[batch_begin:batch_end]
+	        y_data = y_train[batch_begin:batch_end]
+	        
+	        y_tensor = torch.tensor(y_data, dtype=torch.int64)
+	        optimizer.zero_grad()
+	        
+	        y_pred = model(X_tensor)
+	#        print("#Y_pred")
+	#        tensor_desc(y_pred)
+	        loss = criterion(y_pred, y_tensor)
+	#        print("#Loss: {}".format(loss))
+	    
+	#        model.print_params()
+	        loss.backward()
+	        optimizer.step()
+	#        model.print_params()
+	        
+	        epoch_loss += loss.item()
+	        
+	    print("  End epoch {}. Average loss {}".format(epoch, epoch_loss/num_batches))
+	'''
 
-	    ### convert labels to one-hot
-	    label2idx = {label: i for i, label in enumerate(set(train_y))}
-	    num_labels = len(label2idx.keys())
-	    print("#Categories: {}, {}".format(label2idx.keys(), label2idx.values()))
-	    y_train = convert_to_index(train_y, label2idx, num_labels)
-	    y_dev = convert_to_index(dev_y, label2idx, num_labels)
-	    y_test = convert_to_index(test_y, label2idx, num_labels)
 
-	    return X_train, y_train, X_dev, y_dev, X_test, y_test, word2idx, label2idx
-		'''
+
+
+
+
+
+
+
+
+
+
+
+
 
 
