@@ -18,7 +18,7 @@ Optionally run on CUDA as discussed in https://pytorch.org/tutorials/beginner/bl
 """
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-def train(train,val,model,epochs=10,save_embeddings_path="embeddings/"):
+def train(train,val,model,epochs=10,save_embeddings_path="embeddings/",save_model_path="models/"):
     """
     Implementation below is based on the optimization routine
     on the pytorch website, also used in the previous assignments.
@@ -62,11 +62,23 @@ def train(train,val,model,epochs=10,save_embeddings_path="embeddings/"):
         print(f"Average trainings loss: {total_loss/n}")
 
         # Evaluate
+        """
+        As recommended in chapter 5 of the NLP book, we do perform evaluation
+        during training of the embeddings. Since the model essentially solves a
+        classification task, we check how many words in the validation set
+        are classified correctly based on their context. This does not allow
+        us to directly infer whether embeddings become more meaningful, but it
+        still allows us to infer whether the embeddings are starting to reflect
+        more useful representations for solving the classification problem when
+        confronted with new input.
+        """
         val_acc = 0
         n = 0
         model.eval()
         if save_embeddings_path:
             save_embeddings(model,vocab,vocab_size,model.embedding_size,f"{save_embeddings_path}embeddings{epoch}.txt")
+        if save_model_path:
+            torch.save(model,f"{save_model_path}model{epoch}.pt")
         for batch in val:
             data, labels = batch
             data = data.to(device)
@@ -134,16 +146,16 @@ if __name__ == "__main__":
     tokenizer.do_basic_tokenize = False
 
     # Training set for embeddings
-    train_set = EmbeddingDataset("data/train_emb_merged.csv",tokenizer)
+    train_set = EmbeddingDataset("data/train_emb_merged.csv",tokenizer,max_size=100,window_size=4)
     train_loader = DataLoader(train_set,
         shuffle=True,
-        batch_size=32)
+        batch_size=256)
     
     # Validation set (test) for embeddings
-    val_set = EmbeddingDataset("data/test_emb_merged.csv",tokenizer)
+    val_set = EmbeddingDataset("data/test_emb_merged.csv",tokenizer, max_size = 100,window_size=4)
     val_loader = DataLoader(val_set,
         shuffle=False,
-        batch_size=32)
+        batch_size=256)
 
     # Define model
     vocab = tokenizer.get_vocab()
@@ -160,7 +172,7 @@ if __name__ == "__main__":
     train(train_loader,
           val_loader,
           cbow,
-          epochs=1)
+          epochs=100)
     
 
     # save model
