@@ -5,6 +5,12 @@ import csv
 from torch.utils.data import DataLoader, Dataset 
 from tqdm import tqdm
 
+cat2idx = {"NewsFeed":0,
+          "RightTroll":1,
+          "LeftTroll":2}
+
+idx2cat = ["NewsFeed","RightTroll","LeftTroll"]
+
 class TwitterDataset(Dataset):
     def __init__(self, data_filepath, tokenizer):
         super().__init__()
@@ -24,14 +30,14 @@ class TwitterDataset(Dataset):
                 data_idxs = tokenizer.encode(line[1]) # maps bp to index
 
                 data.append(data_idxs) # we want indices
-                labels.append(line[0])
+                labels.append(cat2idx[line[0]])
 
         self.data = np.array(data)
         self.labels = np.array(labels)
 
 
     def __getitem__(self, index):
-        return torch.Tensor(self.data[index]).long(), torch.Tensor(self.labels[index]).long()
+        return torch.Tensor(self.data[index]).long(), self.labels[index]
 
     def __len__(self):
         return len(self.data)
