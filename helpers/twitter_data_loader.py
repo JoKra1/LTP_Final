@@ -12,7 +12,7 @@ cat2idx = {"NewsFeed":0,
 idx2cat = ["NewsFeed","RightTroll","LeftTroll"]
 
 class TwitterDataset(Dataset):
-    def __init__(self, data_filepath, tokenizer):
+    def __init__(self, data_filepath, tokenizer,max_size = None):
         super().__init__()
 
         #data_file = csv.reader(data_filepath, delimiter = ",")
@@ -23,6 +23,9 @@ class TwitterDataset(Dataset):
             for index, line in enumerate(tqdm(reader)):
                 if index == 0:
                     continue
+
+                if max_size and index > max_size:
+                    break
                 """
                 row == line -> line[1] content, line[0] label
                 """
