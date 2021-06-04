@@ -3,10 +3,9 @@ import time
 import torch
 import torch.nn as nn
 import numpy as np
-from helpers import twitter_data_loader
-from twitter_data_loader import TwitterDataset, padding_collate_fn
+from helpers.twitter_data_loader import TwitterDataset, padding_collate_fn
 from torch.utils.data import DataLoader 
-from transformers import BertTokenizer, BertForMultipleChoice
+from transformers import BertTokenizer, BertForSequenceClassification
 
 batch_size = 32
 epochs = 10
@@ -65,32 +64,32 @@ if __name__ == "__main__":
 	print("loading data...")
 
 	# load data
-	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer)
+	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer,max_size=100)
 	train_data = DataLoader(train_dataset,
 		shuffle = True,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
 	print("train loaded")
-	val_dataset = TwitterDataset("data/val_data.csv", tokenizer)
+	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer,max_size=100)
 	val_data = DataLoader(val_dataset,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
 	print("val loaded")
-	test_dataset = TwitterDataset("data/test_merged.csv", tokenizer)
+	test_dataset = TwitterDataset("data/test_merged.csv", tokenizer,max_size=100)
 	test_data = DataLoader(test_dataset,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
 	print("Data has loaded")
 
 	# load the multilingual Bert model
-	model = BertForMultipleChoice.from_pretrained(pretrained, 
+	model = BertForSequenceClassification.from_pretrained(pretrained, 
 		num_labels = num_labels,
 		num_hidden_layers= num_hidden,
 	    num_attention_heads= num_attention_heads,
 	    output_attentions=True)
 
 	print("Training the model.")
-	#train(model, train_data, val_data, epochs)
+	train(model, train_data, val_data, epochs)
 	evaluate(model, val_data)
 	print("Training is complete.")
 

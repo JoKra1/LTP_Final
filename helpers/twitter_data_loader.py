@@ -52,4 +52,5 @@ def padding_collate_fn(batch):
     padded_data = torch.zeros((len(data), largest_sample), dtype=torch.long)
     for i, sample in enumerate(data):
         padded_data[i, :len(sample)] = sample
+    labels = torch.tensor(list(labels),dtype=torch.long)
     return padded_data, labels # if doesn't work, don't return labels :)
