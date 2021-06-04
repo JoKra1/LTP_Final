@@ -4,6 +4,7 @@ import numpy as np
 import csv
 from torch.utils.data import DataLoader, Dataset 
 from tqdm import tqdm
+from enum import Enum
 
 cat2idx = {"NewsFeed":0,
           "RightTroll":1,
@@ -11,8 +12,12 @@ cat2idx = {"NewsFeed":0,
 
 idx2cat = ["NewsFeed","RightTroll","LeftTroll"]
 
+class SupportedFormat(Enum):
+    RNN = 1
+    TRANSFORMER = 2
+
 class TwitterDataset(Dataset):
-    def __init__(self, data_filepath, tokenizer,max_size = None):
+    def __init__(self, data_filepath, tokenizer,max_size = None,format = SupportedFormat.TRANSFORMER):
         super().__init__()
 
         #data_file = csv.reader(data_filepath, delimiter = ",")
@@ -30,7 +35,12 @@ class TwitterDataset(Dataset):
                 row == line -> line[1] content, line[0] label
                 """
                 tokens = tokenizer.tokenize(line[1]) # Byte-pair
-                data_idxs = tokenizer.encode(line[1]) # maps bp to index
+                if format == SupportedFormat.TRANSFORMER:
+                    # Permit for transformer specific encodings
+                    data_idxs = tokenizer.encode(line[1]) # Indices
+                elif format == SupportedFormat.RNN:
+                    # map tokens directly to indices (no CLS token)
+                    data_idxs = tokenizer.convert_tokens_to_ids(tokens) 
 
                 data.append(data_idxs) # we want indices
                 labels.append(cat2idx[line[0]])
@@ -52,5 +62,6 @@ def padding_collate_fn(batch):
     padded_data = torch.zeros((len(data), largest_sample), dtype=torch.long)
     for i, sample in enumerate(data):
         padded_data[i, :len(sample)] = sample
+    # Until here labels is a tuple, so cast to tensor.
     labels = torch.tensor(list(labels),dtype=torch.long)
-    return padded_data, labels # if doesn't work, don't return labels :)
+    return padded_data, labels
