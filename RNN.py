@@ -162,17 +162,3 @@ if __name__ == "__main__":
 
 	# Train
 	train(model,train_data,val_data,epochs=epochs)
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
