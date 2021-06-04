@@ -83,6 +83,26 @@ if __name__ == "__main__":
 		print("  End epoch {}. Average loss {}".format(epoch, epoch_loss/num_batches))
 
 
+		#Validation of model
+	print("  Validation")
+	epoch_acc = 0
+
+	for batch in range(val_data):
+		val_data, val_labels = batch
+		
+		output_val = model(data)
+
+		''' Option one
+		outputExx = torch.max(y_pred_dev, dim=1)
+
+		epoch_acc += accuracy_score(labels, output_Exx[1].data.numpy())
+		'''
+		epoch_acc += accuracy_score(labels, output_val[1].data.numpy())
+		
+	#print("    {}".format(epoch_acc / num_batches_dev))
+
+
+
 
 
 
