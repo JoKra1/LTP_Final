@@ -3,7 +3,7 @@ import time
 import torch
 import torch.nn as nn
 import numpy as np
-from helpers.twitter_data_loader import TwitterDataset, padding_collate_fn
+from helpers.twitter_data_loader import TwitterDataset, padding_collate_fn, idx2cat
 from torch.utils.data import DataLoader 
 from transformers import BertTokenizer, BertForSequenceClassification
 from sklearn.metrics import accuracy_score
@@ -12,7 +12,7 @@ batch_size = 16
 epochs = 10
 num_hidden = 3
 num_attention_heads = 12
-num_labels = 3
+num_labels = len(idx2cat)
 
 """
 Optionally run on CUDA as discussed in https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
@@ -66,8 +66,8 @@ def train(model, train_data, val_data, epochs):
 
 			n += 1
 		print(f"Average trainings-loss {total_loss/n}")
-		acc = evaluate(model, val_data)
-		print("[Epoch %d] Accuracy (validation): %.4f" %(epoch, acc))
+		acc = evaluate(model, val_data)*100
+		print("[Epoch %d] Accuracy (validation): %.2f" %(epoch, acc))
 
 
 # ----------------------------------------------------------
@@ -81,27 +81,25 @@ if __name__ == "__main__":
 	pretrained = 'bert-base-multilingual-cased'
 	tokenizer = BertTokenizer.from_pretrained(pretrained)
 	tokenizer.do_basic_tokenize = False
-	print("loading data...")
 
 	# load data
+	print("loading data...")
 	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer)
 	train_data = DataLoader(train_dataset,
 		shuffle = True,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
-	print("train loaded")
+	
 	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer)
 	val_data = DataLoader(val_dataset,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
-	print("val loaded")
-	"""
+
 	test_dataset = TwitterDataset("data/test_merged.csv", tokenizer)
 	test_data = DataLoader(test_dataset,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
 	print("Data has loaded")
-	"""
 
 	# load the multilingual Bert model
 	model = BertForSequenceClassification.from_pretrained(pretrained, 
@@ -117,4 +115,8 @@ if __name__ == "__main__":
 	train(model, train_data, val_data, epochs)
 	#evaluate(model, val_data)
 	print("Training is complete.")
+
+	print("Testing the model.")
+	test_accuracy = evaluate(model, test_data)*100
+	print("The test accuracy is: %.2f", %(test_accuracy))
 
