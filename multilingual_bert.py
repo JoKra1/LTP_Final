@@ -116,7 +116,7 @@ if __name__ == "__main__":
 	#evaluate(model, val_data)
 	print("Training is complete.")
 
-	print("Testing the model.")
-	test_accuracy = evaluate(model, test_data)*100
-	print("The test accuracy is: %.2f", %(test_accuracy))
+	#print("Testing the model.")
+	#test_accuracy = evaluate(model, test_data)*100
+	#print("The test accuracy is: %.2f", test_accuracy)
 
