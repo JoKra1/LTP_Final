@@ -18,14 +18,17 @@ num_labels = 3
 def evaluate(model, dataset):
 	model.eval()
 	with torch.no_grad():
+		correct = 0.0
+		total = 0.0
 		for batch in dataset:
 			data, labels = batch
 			y_pred = model(data).logits
-			print("data: ", data)
-			print("labels: ", labels)
+			y_pred = torch.argmax(y_pred, dim=1)
+			correct += torch.sum(y_pred == labels).detach().numpy()
+			total += len(labels)
 
 	model.train()
-	return
+	return correct/total
 
 def train(model, train_data, val_data, epochs):
 	optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -90,7 +93,6 @@ if __name__ == "__main__":
 
 	print("Training the model.")
 	train(model, train_data, val_data, epochs)
-	evaluate(model, val_data)
+	#evaluate(model, val_data)
 	print("Training is complete.")
-
 
