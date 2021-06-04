@@ -43,8 +43,8 @@ def evaluate(model, dataset):
 
 def train(model, train_data, val_data, epochs):
 	optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-
-	for epoch in range(epochs):
+	accuracies = []
+	for epoch in range(epochs): 
 		total_loss = 0.0
 		n = 0
 		for i, batch in enumerate(train_data):
@@ -68,6 +68,8 @@ def train(model, train_data, val_data, epochs):
 		print(f"Average trainings-loss {total_loss/n}")
 		acc = evaluate(model, val_data)*100
 		print("[Epoch %d] Accuracy (validation): %.2f" %(epoch, acc))
+		accuracies.append(acc)
+	return accuracies
 
 
 # ----------------------------------------------------------
@@ -84,22 +86,22 @@ if __name__ == "__main__":
 
 	# load data
 	print("loading data...")
-	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer)
+	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer, max_size =100)
 	train_data = DataLoader(train_dataset,
 		shuffle = True,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
 	
-	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer)
+	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer, max_size =100)
 	val_data = DataLoader(val_dataset,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
 
-	test_dataset = TwitterDataset("data/test_merged.csv", tokenizer)
+	test_dataset = TwitterDataset("data/test_merged.csv", tokenizer, max_size =100)
 	test_data = DataLoader(test_dataset,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
-	print("Data has loaded")
+	print("Data has loaded.")
 
 	# load the multilingual Bert model
 	model = BertForSequenceClassification.from_pretrained(pretrained, 
@@ -112,10 +114,16 @@ if __name__ == "__main__":
 	model.to(device)
 	print("Training the model.")
 	model.train()
-	train(model, train_data, val_data, epochs)
+	accuracies = train(model, train_data, val_data, epochs)
 	#evaluate(model, val_data)
 	print("Training is complete.")
+	print(accuracies)
 
+	change = "2nd change" # change this joshua :) 
+
+	with open("accuracies.txt", "a+") as file:
+		file.write("%s,%s\n" %(change, ",".join(map(str,accuracies))))
+	print("Written to file.")
 	#print("Testing the model.")
 	#test_accuracy = evaluate(model, test_data)*100
 	#print("The test accuracy is: %.2f", test_accuracy)
