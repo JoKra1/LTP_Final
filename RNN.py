@@ -81,6 +81,7 @@ class RNN(nn.Module):
 def train(model,train,val,epochs):
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(params=model.parameters())
+	accuracies = []
 
 	#  Actual training
 	for epoch in range(epochs):
@@ -103,10 +104,11 @@ def train(model,train,val,epochs):
 			
 			epoch_loss += loss.item()
 			n += 1
-			
 		print(f"Average trainings loss {epoch_loss/n}")
 		acc_val = evaluate(model,val)
 		print(f"Validation accuracy: {acc_val}")
+		accuracies.append(acc_val*100)
+	return accuracies
 
 def evaluate(model,val):
 	#Validation of model
@@ -161,4 +163,10 @@ if __name__ == "__main__":
 	model.train()
 
 	# Train
-	train(model,train_data,val_data,epochs=epochs)
+	accuracies = train(model,train_data,val_data,epochs=epochs)
+
+	#Write the accuracies to a file
+	change = "What's this" #Really what is this and what do we want it to be
+	with open("RNNaccuracies.txt", "a+") as file:
+		file.write("%s,%s\n" %(change, ",".join(map(str,accuracies))))
+	print("Written to file.")
