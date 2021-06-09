@@ -134,6 +134,9 @@ dmypy.json
 
 # Bigger datasets
 /data/*merged.csv
+/data/eng*
+/data/ger*
+/data/rus*
 
 # Local test file
 test.py

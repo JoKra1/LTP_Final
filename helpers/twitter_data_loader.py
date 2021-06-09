@@ -8,9 +8,11 @@ from enum import Enum
 
 cat2idx = {"NewsFeed":0,
           "RightTroll":1,
-          "LeftTroll":2}
+          "LeftTroll":2,
+          "Fearmonger":3,
+          "HashtagGamer":4}
 
-idx2cat = ["NewsFeed","RightTroll","LeftTroll"]
+idx2cat = ["NewsFeed","RightTroll","LeftTroll","Fearmonger","HashtagGamer"]
 
 class SupportedFormat(Enum):
     RNN = 1
