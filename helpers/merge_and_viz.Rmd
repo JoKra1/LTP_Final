@@ -158,6 +158,7 @@ write.csv(test,"../data/test_merged.csv",sep=",",row.names = F)
 
 summary(train)
 summary(val)
+summary(test)
 
 # per language eval and test sets
 write.csv(val_eng,"../data/eng_val.csv",row.names = F)
@@ -198,6 +199,8 @@ test_eng_emb <- test_eng[1:110000,]
 
 train_emb <- rbind(train_eng_emb,train_rus_emb,train_ger_emb)
 test_emb <- rbind(test_eng_emb,test_rus_emb,test_ger_emb)
+
+train_emb <- train_emb$content
 
 write.csv(train_emb,"../data/train_emb_merged.csv",sep=",",row.names = F)
 write.csv(test_emb,"../data/test_emb_merged.csv",sep=",",row.names = F)

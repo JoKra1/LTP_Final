@@ -143,3 +143,4 @@ test.py
 
 # Embeddings
 embeddings/*
+word_embeddings*

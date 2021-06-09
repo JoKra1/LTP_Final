@@ -8,114 +8,10 @@ from sklearn.metrics import accuracy_score
 from torch.utils.data import DataLoader 
 from transformers import BertTokenizer, BertForTokenClassification
 from helpers.embedding_data_loader import EmbeddingDataset
-from models.cbow import CBOW
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 from gensim.models.keyedvectors import KeyedVectors
-
-"""
-Optionally run on CUDA as discussed in https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
-"""
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-def train(train,val,model,epochs=10,save_embeddings_path="embeddings/",save_model_path="models/"):
-    """
-    Implementation below is based on the optimization routine
-    on the pytorch website, also used in the previous assignments.
-
-    Also the loss calculation parts are taken from the code and solutions that were provided for
-    assignments 2 and 3.
-
-    Source: https://pytorch.org/docs/stable/optim.html#taking-an-optimization-step
-    """
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
-    loss_f = nn.CrossEntropyLoss() # Based on assignment 2 referring to NLP book, page 47!
-    for epoch in range(epochs):
-        total_loss = 0
-        n = 0
-        print(f"Epoch: {epoch}")
-        for i, batch in enumerate(tqdm(train)):
-            data, labels = batch
-
-            data = data.to(device)
-            labels = labels.long()
-            labels = labels.to(device)
-        
-            # i. zero gradients
-            optimizer.zero_grad()
-
-            # ii. do forward pass
-            outp = model(data)
-            
-            # iii. get loss
-            loss = loss_f(outp,labels)
-
-            # add loss to total_loss
-            total_loss += loss.item()
-            n += 1
-
-            # iv. do backward pass
-            loss.backward()
-
-            # v. take an optimization step
-            optimizer.step()
-        print(f"Average trainings loss: {total_loss/n}")
-
-        # Evaluate
-        """
-        As recommended in chapter 5 of the NLP book, we do perform evaluation
-        during training of the embeddings. Since the model essentially solves a
-        classification task, we check how many words in the validation set
-        are classified correctly based on their context. This does not allow
-        us to directly infer whether embeddings become more meaningful, but it
-        still allows us to infer whether the embeddings are starting to reflect
-        more useful representations for solving the classification problem when
-        confronted with new input.
-        """
-        val_acc = 0
-        n = 0
-        model.eval()
-        if save_embeddings_path:
-            save_embeddings(model,vocab,vocab_size,model.embedding_size,f"{save_embeddings_path}embeddings{epoch}.txt")
-        if save_model_path:
-            torch.save(model,f"{save_model_path}model{epoch}.pt")
-        for batch in val:
-            data, labels = batch
-            data = data.to(device)
-
-            # Predictions
-            outp = model(data)
-            outp = torch.max(outp, dim=1).indices
-
-            # Copy back to cpu for conversion
-            labels = labels.cpu()
-            outp = outp.cpu()
-
-            # Calculate batch accuracy
-            batch_acc = accuracy_score(labels.numpy(),outp.numpy())
-            val_acc += batch_acc
-            n += 1
-        print(f"Validation Accuracy: {val_acc/n}")
-        model.train()
-
-def save_embeddings(model,vocab,vocab_size,embedding_dim,output_path):
-    """
-    Writes to gensim format!
-
-    Based on my submission for assignment 3.
-    
-    Source for format: https://github.com/RaRe-Technologies/gensim/blob/develop/gensim/test/test_data/word2vec_pre_kv_c
-    """
-    print("Saving embeddings, this might take a while...")
-    W = model.embedding.weight
-    vocab_words = list(vocab.keys())
-    with open(output_path, mode="w", encoding="utf8") as output:
-        output.write(f"{vocab_size} {embedding_dim}\n")
-        for i,r in enumerate(W):
-            row = r.tolist()
-            row.insert(0,vocab_words[i])
-            row = " ".join([str(c) for c in row])
-            output.write(row + "\n")
+from gensim.models import Word2Vec
 
 def tsne_plot(path_to_embeddings,n=1000):
     """
@@ -127,7 +23,7 @@ def tsne_plot(path_to_embeddings,n=1000):
     For plot: https://github.com/antot/ltp-notebooks-201920/blob/master/05_Representations.ipynb
     """
     print("Plotting embeddings, this might take a while...")
-    embeddings = KeyedVectors.load_word2vec_format(path_to_embeddings, binary=False)
+    embeddings = KeyedVectors.load(path_to_embeddings)
     X_TSNE = embeddings.vectors[104:n,:] # First 104 are unsued. Leftovers from Bert tokenizer.
     reduced_embed = TSNE(n_components= 2).fit_transform(X_TSNE)
     for i,pair in enumerate(reduced_embed):
@@ -138,46 +34,88 @@ def tsne_plot(path_to_embeddings,n=1000):
     plt.ylabel("TSNE Dimension 2")
     plt.show()
 
+def convertEmbeddings(pathTow2v,tokenizer):
+    """
+    Creates matrix with correct indexing for RNN & BERT.
+
+    The vocab created by Gensim's w2v is not in the same
+    order as the one provided by the BERT tokenizer. This
+    function basically reverse traces the ordering to ensure
+    the embeddings correspond to the correct index when training
+    with the RNN and the BERT.
+
+    We cast to FloatTensor in the end because that is what is
+    requested by the call to nn.Embedding.from_pretrained(), as
+    discussed in the references below.
+
+    Source:
+    https://stackoverflow.com/questions/49710537/pytorch-gensim-how-to-load-pre-trained-word-embeddings
+    https://pytorch.org/docs/stable/generated/torch.nn.Embedding.html#torch.nn.Embedding.from_pretrained
+    """
+    vocab = tokenizer.get_vocab()
+    keys = list(vocab.keys())
+    model = Word2Vec.load(pathTow2v)
+    wv = model.wv
+    corrected = []
+
+    for correct_index in range(tokenizer.vocab_size):
+        token = keys[correct_index]
+        gensim_index = wv.key_to_index[token]
+        vect = wv.vectors[gensim_index]
+        if correct_index == 0:
+            corrected.append(np.array([0 for _ in range(len(vect))],dtype=np.float32))
+        else:
+            corrected.append(vect)
+    
+    corrected = np.stack(corrected)
+    corrected = torch.FloatTensor(corrected)
+    return corrected
+
+
 if __name__ == "__main__":
-    print(device)
+
     # Get original tokenizer
     pretrained = 'bert-base-multilingual-cased'
     tokenizer = BertTokenizer.from_pretrained(pretrained)
     tokenizer.do_basic_tokenize = False
 
-    # Training set for embeddings
-    train_set = EmbeddingDataset("data/train_emb_merged.csv",tokenizer,max_size=100,window_size=4)
-    train_loader = DataLoader(train_set,
-        shuffle=True,
-        batch_size=256)
-    
-    # Validation set (test) for embeddings
-    val_set = EmbeddingDataset("data/test_emb_merged.csv",tokenizer, max_size = 100,window_size=4)
-    val_loader = DataLoader(val_set,
-        shuffle=False,
-        batch_size=256)
-
-    # Define model
+    # Load training set for embeddings
+    train_set = EmbeddingDataset("data/train_emb_merged.csv",tokenizer)
     vocab = tokenizer.get_vocab()
-    vocab_size = tokenizer.vocab_size
-    cbow = CBOW(vocabulary_size = vocab_size,
-                embedding_size = 300)
-
-    # Or load
-    # cbow = torch.load("models/cbow.pt")
-    cbow.to(device)
+    keys = list(vocab.keys())
     
-    # train
-    cbow.train()
-    train(train_loader,
-          val_loader,
-          cbow,
-          epochs=100)
-    
+    # Initialize w2v model
+    """
+    We looked at the documentation and examples (see below)
+    and the GENSIM implementation is based on the original C implementation
+    that was also recommended by Lukas (Thanks again!!!).
+    However, the Gensim implementation allowed us to pre-define the
+    vocabulary, which allowed us to just re-create it from the BERT tokenizer one,
+    ensuring that the vocabulary would be exactly the same across all models.
 
-    # save model
-    torch.save(cbow,"models/cbow.pt")
+    This of course means that some vectors returned by the w2v model will just be
+    randomly initialized ones, in case the corresponding tokens were part of the
+    original vocabulary but not part of the actual corpus used for training.
 
-    # plot
-    tsne_plot("embeddings/embeddings0.txt")
+    The parameters below were based on the ones recommended by Lukas, and we opted
+    for cbow (sg=0).
+
+    Sources:
+    https://radimrehurek.com/gensim/models/word2vec.html
+    https://radimrehurek.com/gensim/auto_examples/tutorials/run_word2vec.html
+
+    """
+    model = Word2Vec(vector_size=768,sg=0,negative=10,min_count=0,window=10,workers=16)
+    model.build_vocab([keys]) # Pre-instantiate vocabulary using the keys from Bert tokenizer
+
+    print("Beginning training")
+    model.train(train_set,epochs=10,total_examples=train_set.len,compute_loss=True)
+
+    # Save actual model
+    model.save("embeddings/w2v.model")
+
+    # Save embeddings
+    wv = model.wv
+    wv.save("word_embeddings.kv")
+    tsne_plot("word_embeddings.kv")
     

@@ -8,10 +8,11 @@ from helpers.twitter_data_loader import TwitterDataset, padding_collate_fn, idx2
 from torch.utils.data import DataLoader 
 from transformers import BertTokenizer, BertForSequenceClassification, BertConfig
 from sklearn.metrics import accuracy_score
+from train_embeddings import convertEmbeddings
 
 batch_size = 128
 epochs = 20
-num_attention_heads = 12
+num_attention_heads = 12 # This one needs to remain fixed!!
 num_labels = len(idx2cat)
 
 """
@@ -130,8 +131,8 @@ if __name__ == "__main__":
 		batch_size = batch_size)
 	
 	print("Loaded sub-eval sets.")
-
-	### Model optimization ###
+	"""
+	### Model optimization: Untrained & Uninitialized embeddings ###
 	num_hiddens = [1,5,10,12]
 	dropout_probs = [0.1,0.2,0.3,0.4,0.5,0.7,1.0]
 	sub_evals =[val_eng,val_rus,val_ger]
@@ -167,5 +168,55 @@ if __name__ == "__main__":
 					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
 			
 			print("Written to file.")
+	"""
+	### Model optimization: Untrained & Random embeddings ###
+	pretrainedEmbeddings = convertEmbeddings("embeddings/w2v.model",tokenizer)
 
+	for num_hidden in num_hiddens:
 
+		for dropout_prob in dropout_probs:
+			### Untrained BERT ###
+			config = BertConfig.from_pretrained(pretrained)
+			config.num_labels = num_labels
+			config.num_hidden_layers = num_hidden
+			config.num_attention_heads = num_attention_heads
+			config.hidden_dropout_prob = dropout_prob
+			config.output_attentions = True
+
+			# Setup an untrained model
+			model = BertForSequenceClassification(config)
+			"""
+			To initialize BERT embeddings with pre-trained ones,
+			we followed the steps outlined by Lukas:
+
+			model.Bert should contain the bert model
+			model.Bert.embeddings should contain all the embeddings
+			model.Bert.embeddings.word_embeddings should contain the word embeddings
+
+			model.bert.embeddings.word_embeddings.weight = weights
+
+			The cast to parameter is necessary (the model crashes otherwise) and
+			we also set requires_grad to False, since we want the embeddings to be treated
+			as frozen.
+
+			Source:
+			https://pytorch.org/docs/stable/notes/autograd.html#requires-grad
+			"""
+			model.bert.embeddings.word_embeddings.weight = nn.Parameter(pretrainedEmbeddings,requires_grad=False)
+
+			# Send device to gpu
+			model.to(device)
+			model.train()
+			accuracies,sub_accuracies = train(model, train_data, val_data, epochs,sub_evals=sub_evals)
+			# Write the accuracies to a file
+			change = f"n_hidden: {num_hidden} Dropout: {dropout_prob}"
+			with open("BERTPREaccuracies.txt", "a+") as file:
+				file.write("%s,%s\n" %(change, ",".join(map(str,accuracies))))
+			
+			# Write sub-accuracies
+			for index, identifier in enumerate(sub_ids):
+				sub_acc = sub_accuracies[index]
+				with open(f"BERTPREaccuracies_{identifier}.txt", "a+") as file:
+					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
+			
+			print("Written to file.")
