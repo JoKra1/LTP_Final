@@ -9,7 +9,7 @@ from transformers import BertTokenizer
 from helpers.twitter_data_loader import TwitterDataset, padding_collate_fn, idx2cat, SupportedFormat
 from sklearn.metrics import accuracy_score
 
-batch_size = 256
+batch_size = 64
 epochs = 20
 
 """
@@ -37,6 +37,7 @@ class RNN(nn.Module):
 		Apparently, the length vector needs to be on cpu! It crashed
 		without the explicit ensurance policy implemented below.
 		"""
+
 		x_valid = torch.count_nonzero(x,dim=1)
 		if not device == "cpu":
 			x_valid = x_valid.cpu()
@@ -111,7 +112,6 @@ def train(model,train,val,epochs,sub_evals=None):
 			labels = labels.to(device)
 
 			optimizer.zero_grad()
-			
 			output = model(data)
 
 			loss = criterion(output, labels)
@@ -134,7 +134,7 @@ def train(model,train,val,epochs,sub_evals=None):
 
 def evaluate(model,val):
 	#Validation of model
-	epoch_acc = 0
+	correct = 0
 	n = 0
 	model.eval()
 	for batch in val:
@@ -143,13 +143,14 @@ def evaluate(model,val):
 
 		output_val = model(val_data)
 		output_val_classes = torch.max(output_val, dim=1).indices
-		if not device == "cpu":
-			output_val_classes = output_val_classes.cpu()
 
-		epoch_acc += accuracy_score(val_labels.numpy(), output_val_classes.numpy())
-		n += 1
+		for pred,true in zip(output_val_classes.tolist(),
+							 val_labels.tolist()):
+			if pred == true:
+				correct += 1
+			n += 1
 	model.train()
-	return epoch_acc/n
+	return correct/n
 
 if __name__ == "__main__":
 	print(device)
