@@ -32,8 +32,7 @@ class RNN(nn.Module):
 		"""
 
 		x_valid = torch.count_nonzero(x,dim=1)
-		if not device == "cpu":
-			x_valid = x_valid.cpu()
+		x_valid = x_valid.cpu()
 
 		"""
 		Embedding step can happen on entire batch

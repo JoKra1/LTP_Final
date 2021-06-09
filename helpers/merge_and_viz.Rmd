@@ -16,11 +16,12 @@ library(RColorBrewer)
 ```{r}
 ind_files <- list.files("../data")
 merged_files <- NULL
+
 for (file in ind_files) {
-  file <- ind_files[1]
   # Some checks
   valid <- grep("^IRAhandle_tweets_[1-9]+.csv$",file)
   if (length(valid) == 1) {
+    print(file[valid])
     ind_dat <- read.csv(paste0("../data/",file[valid]),sep=",")
     merged_files <- rbind(merged_files,ind_dat)
   }
@@ -127,6 +128,7 @@ sub_dat_eng <- sub_dat_class[sub_dat_class$language == "English",]
 sub_dat_rus <- sub_dat_class[sub_dat_class$language == "Russian",]
 sub_dat_ger <- sub_dat_class[sub_dat_class$language == "German",]
 
+
 # Randomize
 sub_dat_eng <- sub_dat_eng[sample(nrow(sub_dat_eng)),]
 sub_dat_rus <- sub_dat_rus[sample(nrow(sub_dat_rus)),]
@@ -187,22 +189,18 @@ sub_dat_non_eng_rus <- sub_dat_non_eng_rus[sample(nrow(sub_dat_non_eng_rus)),]
 sub_dat_non_eng_ger <- sub_dat_non_eng_ger[sample(nrow(sub_dat_non_eng_ger)),]
 
 # Only train/test split to maximize data
-train_rus_emb <- sub_dat_non_eng_rus[1:floor(0.85 * nrow(sub_dat_non_eng_rus)),]
-test_rus_emb <- sub_dat_non_eng_rus[(floor(0.85 * nrow(sub_dat_non_eng_rus)) + 1): nrow(sub_dat_non_eng_rus),]
+train_rus_emb <- sub_dat_non_eng_rus
 
-train_ger_emb <- sub_dat_non_eng_ger[1:floor(0.85 * nrow(sub_dat_non_eng_ger)),]
-test_ger_emb <- sub_dat_non_eng_ger[(floor(0.85 * nrow(sub_dat_non_eng_ger)) + 1): nrow(sub_dat_non_eng_ger),]
+train_ger_emb <- sub_dat_non_eng_ger
 
 # Drop some English tweets to achieve better balance
 train_eng_emb <- train_eng[1:630000,]
-test_eng_emb <- test_eng[1:110000,]
+
 
 train_emb <- rbind(train_eng_emb,train_rus_emb,train_ger_emb)
-test_emb <- rbind(test_eng_emb,test_rus_emb,test_ger_emb)
 
 train_emb <- train_emb$content
 
 write.csv(train_emb,"../data/train_emb_merged.csv",sep=",",row.names = F)
-write.csv(test_emb,"../data/test_emb_merged.csv",sep=",",row.names = F)
 ```
 

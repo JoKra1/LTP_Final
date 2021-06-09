@@ -116,6 +116,13 @@ if __name__ == "__main__":
 
     # Save embeddings
     wv = model.wv
+    
     wv.save("word_embeddings.kv")
     tsne_plot("word_embeddings.kv")
+
+    # Print some embeddings
+    print(wv.most_similar("Trump"))
+    print(wv.most_similar("Clinton"))
+    print(wv.most_similar("Democrats"))
+    print(wv.most_similar("Republicans"))
     

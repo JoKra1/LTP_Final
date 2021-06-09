@@ -96,13 +96,13 @@ if __name__ == "__main__":
 
 	# load data
 	print("loading data...")
-	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer, max_size =100)
+	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer)
 	train_data = DataLoader(train_dataset,
 		shuffle = True,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
 	
-	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer, max_size =100)
+	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer)
 	val_data = DataLoader(val_dataset,
 		collate_fn = padding_collate_fn,
 		batch_size = batch_size)
@@ -115,7 +115,7 @@ if __name__ == "__main__":
 	print("Data has loaded.")
 
 	# load sub-eval sets (per language)
-	val_eng = TwitterDataset("data/eng_val.csv", tokenizer,max_size=100)
+	val_eng = TwitterDataset("data/eng_val.csv", tokenizer)
 	val_eng = DataLoader(val_eng,
 		collate_fn=padding_collate_fn,
 		batch_size = batch_size)
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 		batch_size = batch_size)
 	
 	print("Loaded sub-eval sets.")
-	"""
+	
 	### Model optimization: Untrained & Uninitialized embeddings ###
 	num_hiddens = [1,5,10,12]
 	dropout_probs = [0.1,0.2,0.3,0.4,0.5,0.7,1.0]
@@ -168,7 +168,7 @@ if __name__ == "__main__":
 					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
 			
 			print("Written to file.")
-	"""
+	
 	### Model optimization: Untrained & Random embeddings ###
 	pretrainedEmbeddings = convertEmbeddings("embeddings/w2v.model",tokenizer)
 

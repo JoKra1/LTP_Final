@@ -11,7 +11,7 @@ from sklearn.metrics import accuracy_score
 from models.RNN import RNN
 from train_embeddings import convertEmbeddings
 
-batch_size = 256
+batch_size = 128
 epochs = 20
 
 """
@@ -35,9 +35,7 @@ def train(model,train,val,epochs,sub_evals=None):
 		print(f"Epoch {epoch}")
 		for batch in tqdm(train):
 			data, labels = batch
-			dat = data[0]
-			dat = tokenizer.convert_ids_to_tokens(list(dat))
-			print(dat)
+
 			data = data.to(device)
 			labels = labels.to(device)
 
@@ -90,20 +88,20 @@ if __name__ == "__main__":
 	print("loading data...")
 
 	# load data
-	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer,format=SupportedFormat.RNN,max_size=100)
+	train_dataset = TwitterDataset("data/train_merged.csv", tokenizer,format=SupportedFormat.RNN)
 	train_data = DataLoader(train_dataset,
 		shuffle = True,
 		collate_fn=padding_collate_fn,
 		batch_size = batch_size)
 	print("train loaded")
-	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer,format=SupportedFormat.RNN,max_size=100)
+	val_dataset = TwitterDataset("data/val_merged.csv", tokenizer,format=SupportedFormat.RNN)
 	val_data = DataLoader(val_dataset,
 		collate_fn=padding_collate_fn,
 		batch_size = batch_size)
 	print("val loaded")
 
 	# load sub-eval sets (per language)
-	val_eng = TwitterDataset("data/eng_val.csv", tokenizer,format=SupportedFormat.RNN,max_size=100)
+	val_eng = TwitterDataset("data/eng_val.csv", tokenizer,format=SupportedFormat.RNN)
 	val_eng = DataLoader(val_eng,
 		collate_fn=padding_collate_fn,
 		batch_size = batch_size)
