@@ -144,3 +144,6 @@ test.py
 # Embeddings
 embeddings/*
 word_embeddings*
+
+# Models in root
+*.pt
