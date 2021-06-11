@@ -11,8 +11,8 @@ from sklearn.metrics import accuracy_score
 from models.RNN import RNN
 from train_embeddings import convertEmbeddings
 
-batch_size = 128
-epochs = 20
+batch_size = 1024
+epochs = 10
 
 """
 Optionally run on CUDA as discussed in https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
@@ -126,7 +126,7 @@ if __name__ == "__main__":
 	
 	### Model optimization: Random embeddings ###
 	GRU_sizes = [100,250,500]
-	dropout_probs = [0.1,0.2,0.3,0.4,0.5,0.7,1.0]
+	dropout_probs = [0.1,0.2,0.3,0.4,0.5]
 	sub_evals =[val_eng,val_rus,val_ger]
 	sub_ids = ["eng","rus","ger"]
 
@@ -136,6 +136,16 @@ if __name__ == "__main__":
 			# Setup model
 			model = RNN(input_dim=tokenizer.vocab_size, output_dim=5,
 						gru_dim=gru_size,dropout_prob=dropout_prob)
+			
+			# Multi-gpu setup
+			"""
+			Source:
+			https://pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html#create-model-and-dataparallel
+			"""
+			if torch.cuda.device_count() > 1:
+				print("Let's use", torch.cuda.device_count(), "GPUs!")
+				model = nn.DataParallel(model)
+
 			model.to(device)
 			model.train()
 
@@ -164,6 +174,16 @@ if __name__ == "__main__":
 			# Setup model
 			model = RNN(input_dim=tokenizer.vocab_size, output_dim=5,
 						gru_dim=gru_size,dropout_prob=dropout_prob,preEmbeddings=pretrainedEmbeddings)
+			
+			# Multi-gpu setup
+			"""
+			Source:
+			https://pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html#create-model-and-dataparallel
+			"""
+			if torch.cuda.device_count() > 1:
+				print("Let's use", torch.cuda.device_count(), "GPUs!")
+				model = nn.DataParallel(model)
+
 			model.to(device)
 			model.train()
 

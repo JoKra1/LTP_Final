@@ -10,8 +10,8 @@ from transformers import BertTokenizer, BertForSequenceClassification, BertConfi
 from sklearn.metrics import accuracy_score
 from train_embeddings import convertEmbeddings
 
-batch_size = 128
-epochs = 20
+batch_size = 128 # 32 for 6 layer BERT
+epochs = 10
 num_attention_heads = 12 # This one needs to remain fixed!!
 num_labels = len(idx2cat)
 
@@ -29,9 +29,23 @@ def evaluate(model, dataset):
 		total = 0.0
 		for batch in dataset:
 			data, labels = batch
+
+			# mask
+			"""
+			Masking for the attenntion mechanisms as also done in the
+			transformers example.
+
+			Source: https://huggingface.co/transformers/custom_datasets.html#fine-tuning-with-native-pytorch-tensorflow
+			and: https://huggingface.co/transformers/model_doc/bert.html#transformers.BertForSequenceClassification
+			"""
+			mask = torch.zeros_like(data)
+			mask[data != 0] = 1
+			mask = mask.float()
+			mask = mask.to(device)
+
 			data = data.to(device)
 
-			y_pred = model(data).logits
+			y_pred = model(data,attention_mask=mask).logits
 			y_pred = torch.argmax(y_pred, dim=1)
 			if not device == "cpu":
 				y_pred = y_pred.cpu()
@@ -54,12 +68,27 @@ def train(model, train_data, val_data, epochs, sub_evals=None):
 		n = 0
 		for i, batch in enumerate(tqdm(train_data)):
 			data, labels = batch
+			
+			# mask
+			"""
+			Masking for the attenntion mechanisms as also done in the
+			transformers example.
+
+			Source: https://huggingface.co/transformers/custom_datasets.html#fine-tuning-with-native-pytorch-tensorflow
+			and: https://huggingface.co/transformers/model_doc/bert.html#transformers.BertForSequenceClassification
+			"""
+
+			mask = torch.zeros_like(data)
+			mask[data != 0] = 1
+			mask = mask.float()
+			mask = mask.to(device)
+
 			data = data.to(device)
 			labels = labels.to(device)
 
 			optimizer.zero_grad()
 
-			output = model(data, labels= labels)
+			output = model(data,attention_mask=mask,labels=labels)
 
 			loss = output.loss
 
@@ -115,7 +144,7 @@ if __name__ == "__main__":
 	print("Data has loaded.")
 
 	# load sub-eval sets (per language)
-	val_eng = TwitterDataset("data/eng_val.csv", tokenizer)
+	val_eng = TwitterDataset("data/eng_val.csv",tokenizer)
 	val_eng = DataLoader(val_eng,
 		collate_fn=padding_collate_fn,
 		batch_size = batch_size)
@@ -133,8 +162,8 @@ if __name__ == "__main__":
 	print("Loaded sub-eval sets.")
 	
 	### Model optimization: Untrained & Uninitialized embeddings ###
-	num_hiddens = [1,5,10,12]
-	dropout_probs = [0.1,0.2,0.3,0.4,0.5,0.7,1.0]
+	num_hiddens = [1,6]
+	dropout_probs = [0.1,0.2,0.3,0.4,0.5]
 	sub_evals =[val_eng,val_rus,val_ger]
 	sub_ids = ["eng","rus","ger"]
 
@@ -169,8 +198,11 @@ if __name__ == "__main__":
 			
 			print("Written to file.")
 	
-	### Model optimization: Untrained & Random embeddings ###
+	### Model: Untrained & Random embeddings ###
+	print("Training Bert on pre-trained embeddings")
 	pretrainedEmbeddings = convertEmbeddings("embeddings/w2v.model",tokenizer)
+	num_hiddens = [1]
+	dropout_probs = [0.4]
 
 	for num_hidden in num_hiddens:
 
@@ -217,6 +249,39 @@ if __name__ == "__main__":
 			for index, identifier in enumerate(sub_ids):
 				sub_acc = sub_accuracies[index]
 				with open(f"BERTPREaccuracies_{identifier}.txt", "a+") as file:
+					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
+			
+			print("Written to file.")
+	
+	### Model: Pre-trained BERT ###
+	print("Fine-tuning pretrained BERT")
+	num_hiddens = [6]
+	dropout_probs = [0.4]
+
+	for num_hidden in num_hiddens:
+
+		for dropout_prob in dropout_probs:
+			# Setup pre-trained BERT
+			
+			model = BertForSequenceClassification.from_pretrained(pretrained,
+			num_labels = num_labels,
+			num_hidden_layers=num_hidden,
+			num_attention_heads=num_attention_heads,
+			output_attentions=True)
+
+			# Send device to gpu
+			model.to(device)
+			model.train()
+			accuracies,sub_accuracies = train(model, train_data, val_data, epochs,sub_evals=sub_evals)
+			# Write the accuracies to a file
+			change = f"n_hidden: {num_hidden} Dropout: {dropout_prob}"
+			with open("BERTFINEaccuracies.txt", "a+") as file:
+				file.write("%s,%s\n" %(change, ",".join(map(str,accuracies))))
+			
+			# Write sub-accuracies
+			for index, identifier in enumerate(sub_ids):
+				sub_acc = sub_accuracies[index]
+				with open(f"BERTFINEaccuracies_{identifier}.txt", "a+") as file:
 					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
 			
 			print("Written to file.")

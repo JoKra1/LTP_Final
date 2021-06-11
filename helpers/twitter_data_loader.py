@@ -37,6 +37,15 @@ class TwitterDataset(Dataset):
                 row == line -> line[1] content, line[0] label
                 """
                 tokens = tokenizer.tokenize(line[1]) # Byte-pair
+
+                if len(tokens) == 0:
+                    """
+                    There is a single example somewhere in the training data
+                    with no text. This one catches it.
+                    """
+                    print("Skipping non-encodeable example.")
+                    continue
+
                 if format == SupportedFormat.TRANSFORMER:
                     # Permit for transformer specific encodings
                     data_idxs = tokenizer.encode(line[1]) # Indices
@@ -60,10 +69,20 @@ class TwitterDataset(Dataset):
 def padding_collate_fn(batch):
     """ Pads data with zeros to size of longest sentence in batch. """
     data, labels = zip(*batch)
-    largest_sample = max([len(d) for d in data])
+    lens = [len(d) for d in data]
+    largest_sample = max(lens)
+    smallest_sample = min(lens)
+
     padded_data = torch.zeros((len(data), largest_sample), dtype=torch.long)
     for i, sample in enumerate(data):
         padded_data[i, :len(sample)] = sample
     # Until here labels is a tuple, so cast to tensor.
     labels = torch.tensor(list(labels),dtype=torch.long)
+
+    if smallest_sample <= 0:
+        """
+        Just a sanity check. This should NEVER execute. Otherwise RNN training will fail.
+        """
+        print("invalid.")
+
     return padded_data, labels
