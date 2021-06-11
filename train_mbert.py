@@ -162,9 +162,8 @@ if __name__ == "__main__":
 	print("Loaded sub-eval sets.")
 	
 	### Model optimization: Untrained & Uninitialized embeddings ###
-	batch_size = 32
-	num_hiddens = [6]
-	dropout_probs = [0.3]
+	num_hiddens = []
+	dropout_probs = [0.1]
 	sub_evals =[val_eng,val_rus,val_ger]
 	sub_ids = ["eng","rus","ger"]
 
@@ -196,14 +195,15 @@ if __name__ == "__main__":
 				sub_acc = sub_accuracies[index]
 				with open(f"BERTaccuracies_{identifier}.txt", "a+") as file:
 					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
-			
+
+			torch.save(model.state_dict(), f"PREmbert{num_hidden}_{dropout_prob}.pt")
 			print("Written to file.")
 	
 	### Model: Untrained & Random embeddings ###
 	print("Training Bert on pre-trained embeddings")
 	pretrainedEmbeddings = convertEmbeddings("embeddings/w2v.model",tokenizer)
 	num_hiddens = []
-	dropout_probs = [0.4]
+	dropout_probs = [0.3]
 
 	for num_hidden in num_hiddens:
 
@@ -256,8 +256,8 @@ if __name__ == "__main__":
 	
 	### Model: Pre-trained BERT ###
 	print("Fine-tuning pretrained BERT")
-	num_hiddens = [6]
-	dropout_probs = [0.3]
+	num_hiddens = [1]
+	dropout_probs = [0.1]
 
 	for num_hidden in num_hiddens:
 
@@ -285,4 +285,5 @@ if __name__ == "__main__":
 				with open(f"BERTFINEaccuracies_{identifier}.txt", "a+") as file:
 					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
 			
+			torch.save(model.state_dict(), f"FINEmbert{num_hidden}_{dropout_prob}.pt")
 			print("Written to file.")
