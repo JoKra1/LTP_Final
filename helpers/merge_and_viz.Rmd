@@ -162,6 +162,12 @@ summary(train)
 summary(val)
 summary(test)
 
+summary(nchar(train$content))
+summary(train$account_category)
+
+# write eng train
+write.csv(train_eng,"../data/eng_train.csv",row.names = F)
+
 # per language eval and test sets
 write.csv(val_eng,"../data/eng_val.csv",row.names = F)
 write.csv(val_rus,"../data/rus_val.csv",row.names = F)

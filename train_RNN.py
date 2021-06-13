@@ -125,8 +125,8 @@ if __name__ == "__main__":
 	"""
 	
 	### Model optimization: Random embeddings ###
-	GRU_sizes = [100,250,500]
-	dropout_probs = [0.1,0.2,0.3,0.4,0.5]
+	GRU_sizes = [500]
+	dropout_probs = [0.1]
 	sub_evals =[val_eng,val_rus,val_ger]
 	sub_ids = ["eng","rus","ger"]
 
@@ -162,7 +162,8 @@ if __name__ == "__main__":
 				sub_acc = sub_accuracies[index]
 				with open(f"RNNaccuracies_{identifier}.txt", "a+") as file:
 					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
-			
+
+			torch.save(model,f"RNN_{gru_size}_{dropout_prob}.pt")
 			print("Written to file.")
 	
 	### Model optimization: Pretrained embeddings ###
@@ -201,4 +202,5 @@ if __name__ == "__main__":
 				with open(f"RNNPREaccuracies_{identifier}.txt", "a+") as file:
 					file.write("%s,%s\n" %(change, ",".join(map(str,sub_acc))))
 			
+			torch.save(model,f"PRE_RNN_{gru_size}_{dropout_prob}.pt")
 			print("Written to file.")
