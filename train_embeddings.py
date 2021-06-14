@@ -13,27 +13,6 @@ import matplotlib.pyplot as plt
 from gensim.models.keyedvectors import KeyedVectors
 from gensim.models import Word2Vec
 
-def tsne_plot(path_to_embeddings,n=1000):
-    """
-    Based on my submission for assignment 3.
-
-    Sources:
-
-    For TSNE: https://scikit-learn.org/stable/modules/generated/sklearn.manifold.TSNE.html
-    For plot: https://github.com/antot/ltp-notebooks-201920/blob/master/05_Representations.ipynb
-    """
-    print("Plotting embeddings, this might take a while...")
-    embeddings = KeyedVectors.load(path_to_embeddings)
-    X_TSNE = embeddings.vectors[104:n,:] # First 104 are unsued. Leftovers from Bert tokenizer.
-    reduced_embed = TSNE(n_components= 2).fit_transform(X_TSNE)
-    for i,pair in enumerate(reduced_embed):
-        plt.scatter(pair[0],pair[1])
-        plt.text(pair[0] + 0.02,pair[1],embeddings.index_to_key[i + 104])
-    plt.title("TSNE reduced embedding visualization")
-    plt.xlabel("TSNE Dimension 1")
-    plt.ylabel("TSNE Dimension 2")
-    plt.show()
-
 def convertEmbeddings(pathTow2v,tokenizer):
     """
     Creates matrix with correct indexing for RNN & BERT.

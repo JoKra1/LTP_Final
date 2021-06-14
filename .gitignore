@@ -147,3 +147,5 @@ word_embeddings*
 
 # Models in root
 *.pt
+
+Results/embedding_results/w2v.*
