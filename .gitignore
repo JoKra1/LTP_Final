@@ -138,6 +138,9 @@ dmypy.json
 /data/ger*
 /data/rus*
 
+# Kaggle files, should be kept locally as well
+/data/IRA*
+
 # Local test file
 test.py
 

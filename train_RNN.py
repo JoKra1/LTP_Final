@@ -19,15 +19,54 @@ Optionally run on CUDA as discussed in https://pytorch.org/tutorials/beginner/bl
 """
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# ----------- EVALUATE -----------
+
+def evaluate(model,val):
+	"""
+	Apart from the masking the evaluation method here is
+	the one used for the BERT models, to make sure that
+	no differences in calculation exist between the two models.
+	"""
+	correct = 0
+	n = 0
+	model.eval()
+	for batch in val:
+		val_data, val_labels = batch
+		val_data = val_data.to(device)
+
+		output_val = model(val_data)
+		output_val_classes = torch.max(output_val, dim=1).indices
+		if not device == "cpu":
+			output_val_classes = output_val_classes.cpu()
+		correct += torch.sum(output_val_classes == val_labels).detach().numpy()
+		n += len(val_labels)
+	model.train()
+	return correct/n
+
+# ----------- TRAIN -----------
 
 def train(model,train,val,epochs,sub_evals=None):
+	"""
+	Apart from the masking the training method here is
+	the one used for the BERT models, to make sure that
+	no differences in calculation exist between the two models.
+
+	Generally, the routine is the one recommended in the
+	pytorch example on network training (linked below) that was
+	used throughout the entire course.
+
+	Source: https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html#train-the-network
+	"""
 	criterion = nn.CrossEntropyLoss()
 	optimizer = optim.Adam(params=model.parameters())
 	accuracies = []
 	sub_accuracies =[]
-	if sub_evals:
+
+	# Per-language evaluation sets
+	if sub_evals is not None:
 		for sub in sub_evals:
 			sub_accuracies.append([])
+
 	#  Actual training
 	for epoch in range(epochs):
 		epoch_loss = 0
@@ -53,34 +92,30 @@ def train(model,train,val,epochs,sub_evals=None):
 		acc_val = evaluate(model,val)
 		print(f"Validation accuracy: {acc_val}")
 		accuracies.append(acc_val*100)
-		if sub_evals:
+
+		# Per-language evaluation sets
+		if sub_evals is not None:
 			for index,sub in enumerate(sub_evals):
 				sub_acc = evaluate(model,sub)
 				sub_accuracies[index].append(sub_acc*100)
 				print(f"Validation sub-accuracy: {index}: {sub_acc}")
 	return accuracies,sub_accuracies
 
-def evaluate(model,val):
-	#Validation of model
-	correct = 0
-	n = 0
-	model.eval()
-	for batch in val:
-		val_data, val_labels = batch
-		val_data = val_data.to(device)
-
-		output_val = model(val_data)
-		output_val_classes = torch.max(output_val, dim=1).indices
-		if not device == "cpu":
-			output_val_classes = output_val_classes.cpu()
-		correct += torch.sum(output_val_classes == val_labels).detach().numpy()
-		n += len(val_labels)
-	model.train()
-	return correct/n
+# ----------- MAIN -----------
 
 if __name__ == "__main__":
+	"""
+	For the tokenizer loading and data loading/pre-processing 
+	we rely on the steps in the code for lab 4, since we adapted the
+	dataloading parts to work four our case here as well.
+	"""
+	
 	print(device)
+	torch.manual_seed(0)
 	np.random.seed(0)
+
+	# ----------- LOAD DATA -----------
+
 	# load tokenizer
 	pretrained = 'bert-base-multilingual-cased'
 	tokenizer = BertTokenizer.from_pretrained(pretrained)
@@ -115,18 +150,12 @@ if __name__ == "__main__":
 	val_ger = DataLoader(val_ger,
 		collate_fn=padding_collate_fn,
 		batch_size = batch_size)
-
-	"""
-	test_dataset = TwitterDataset("data/test_merged.csv", tokenizer,format=SupportedFormat.RNN)
-	test_data = DataLoader(test_dataset,
-		collate_fn=padding_collate_fn,
-		batch_size = batch_size)
-	print("Data has loaded")
-	"""
+	
+	# ----------- EXPERIMENTS -----------
 	
 	### Model optimization: Random embeddings ###
-	GRU_sizes = [500]
-	dropout_probs = [0.1]
+	GRU_sizes = [100,250,500]
+	dropout_probs = [0.1,0.2,0.3,0.4,0.5]
 	sub_evals =[val_eng,val_rus,val_ger]
 	sub_ids = ["eng","rus","ger"]
 
@@ -139,6 +168,9 @@ if __name__ == "__main__":
 			
 			# Multi-gpu setup
 			"""
+			We split the training of the RNN across two GPUs, mainly
+			to speed up training due to the time-constraints of the project.
+
 			Source:
 			https://pytorch.org/tutorials/beginner/blitz/data_parallel_tutorial.html#create-model-and-dataparallel
 			"""
@@ -167,6 +199,7 @@ if __name__ == "__main__":
 			print("Written to file.")
 	
 	### Model optimization: Pretrained embeddings ###
+	GRU_sizes = [500] # We only investigated impact of embeddings for best untrained model (for time reasons)
 	pretrainedEmbeddings = convertEmbeddings("embeddings/w2v.model",tokenizer)
 
 	for gru_size in GRU_sizes:

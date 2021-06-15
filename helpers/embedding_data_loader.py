@@ -1,4 +1,3 @@
-# Authors: Ella Collins, Manon Heinhuis & Joshua Krause
 import torch
 import numpy as np
 import csv
@@ -26,5 +25,12 @@ class EmbeddingDataset:
             # R wraps each tweet into quotes, which need to be removed when
             # reading like this!
             line = line[1:-1]
+            """
+            We want to learn embeddings for the same tokens that the BERT models
+            have access to, this has been previously been recommended and shown
+            to also increase performance!
+
+            See: https://bpemb.h-its.org/
+            """
             tokens = self.tokenizer.tokenize(line) # Byte-pair
             yield tokens

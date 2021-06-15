@@ -1,4 +1,3 @@
-# Authors: Ella Collins, Manon Heinhuis & Joshua Krause
 import torch
 import numpy as np
 import csv
@@ -19,10 +18,15 @@ class SupportedFormat(Enum):
     TRANSFORMER = 2
 
 class TwitterDataset(Dataset):
+    """
+    We used the dataloading code provided for assignment 4 as a template to
+    build this dataset class. We adapted the code to work for both the RNN
+    and the (M)BERT, since the former does not need the special tokens used
+    by BERT (e.g. cls for classification problem, and the seperator token).
+    """
     def __init__(self, data_filepath, tokenizer,max_size = None,format = SupportedFormat.TRANSFORMER):
         super().__init__()
 
-        #data_file = csv.reader(data_filepath, delimiter = ",")
         data = []
         labels = []
         with open(data_filepath, newline="", encoding='utf8') as data_file:
@@ -61,13 +65,29 @@ class TwitterDataset(Dataset):
 
 
     def __getitem__(self, index):
+        """
+        Taken from dataloading code provided for assignment 4. However, we
+        just return a single label so no cast to tensor is necessary.
+        """
         return torch.Tensor(self.data[index]).long(), self.labels[index]
 
     def __len__(self):
+        """
+        Taken from dataloading code provided for assignment 4.
+        """
         return len(self.data)
 
 def padding_collate_fn(batch):
-    """ Pads data with zeros to size of longest sentence in batch. """
+    """
+    Taken from dataloading code provided for assignment 4. However,
+    we only pad the data, since we have only one label per tweet.
+    Thus we cast labels to a long tensor in the end.
+
+    We included a sanity check that should basically never print, since
+    the RNN cannot deal with empty (e.g. only pad tokens) tweets, due
+    to the packing mechanisms used.
+        
+    """
     data, labels = zip(*batch)
     lens = [len(d) for d in data]
     largest_sample = max(lens)

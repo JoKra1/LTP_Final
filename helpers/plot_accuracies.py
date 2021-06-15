@@ -1,9 +1,10 @@
-# attempt at plotting
 import numpy as np
 import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
-	
+	"""
+	Code used to generate accuracy plots over the validation set.
+	"""
 	acc_values = []
 	labels = []
 	x = [1,2]

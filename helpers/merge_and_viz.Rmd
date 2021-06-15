@@ -80,7 +80,7 @@ for (cat in levels(reduced_data$account_category)) {
   print(length(sub_dat$language[sub_dat$language == "Russian"]))
   print(length(sub_dat$language[sub_dat$language == "German"]))
   
-  # word cloud
+  # word cloud based on subset of 5000 tweets
   corpus <- Corpus(VectorSource(sub_dat[1:5000,"content"]))
   
   dtm <- TermDocumentMatrix(corpus) 
@@ -127,7 +127,6 @@ sub_dat_class <- sub_dat[sub_dat$account_category != "NonEnglish",]
 sub_dat_eng <- sub_dat_class[sub_dat_class$language == "English",]
 sub_dat_rus <- sub_dat_class[sub_dat_class$language == "Russian",]
 sub_dat_ger <- sub_dat_class[sub_dat_class$language == "German",]
-
 
 # Randomize
 sub_dat_eng <- sub_dat_eng[sample(nrow(sub_dat_eng)),]
@@ -194,7 +193,7 @@ sub_dat_non_eng_ger <- sub_dat_non_eng[sub_dat_non_eng$language == "German",]
 sub_dat_non_eng_rus <- sub_dat_non_eng_rus[sample(nrow(sub_dat_non_eng_rus)),]
 sub_dat_non_eng_ger <- sub_dat_non_eng_ger[sample(nrow(sub_dat_non_eng_ger)),]
 
-# Only train/test split to maximize data
+# Only train split, since embeddings are evaluated during class. task
 train_rus_emb <- sub_dat_non_eng_rus
 
 train_ger_emb <- sub_dat_non_eng_ger

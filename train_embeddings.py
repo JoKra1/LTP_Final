@@ -67,7 +67,7 @@ if __name__ == "__main__":
     """
     We looked at the documentation and examples (see below)
     and the GENSIM implementation is based on the original C implementation
-    that was also recommended by Lukas (Thanks again!!!).
+    that was also recommended by Lukas during the labs (Thanks again!!!).
     However, the Gensim implementation allowed us to pre-define the
     vocabulary, which allowed us to just re-create it from the BERT tokenizer one,
     ensuring that the vocabulary would be exactly the same across all models.
@@ -97,11 +97,4 @@ if __name__ == "__main__":
     wv = model.wv
     
     wv.save("word_embeddings.kv")
-    tsne_plot("word_embeddings.kv")
-
-    # Print some embeddings
-    print(wv.most_similar("Trump"))
-    print(wv.most_similar("Clinton"))
-    print(wv.most_similar("Democrats"))
-    print(wv.most_similar("Republicans"))
     
