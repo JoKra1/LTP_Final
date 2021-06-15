@@ -10,7 +10,7 @@ We relied on R version 4.0.5. Only base R is required to generate the data-files
 the "wordcloud" package (2.6), the "tm" package (0.7-8), and the "RColorBrewer" package (1.1-2) also listed in the [tutorial](https://towardsdatascience.com/create-a-word-cloud-with-r-bde3e7422e8a) which includes the original code used to generate the clouds here as well.
 
 ## Setup
-To replicate our code first download the original data-set from Kaggle and place the individual IRA* .csv files in the data-folder. Then:
+To replicate our results first download the original data-set from Kaggle and place the individual IRA* .csv files in the data-folder. Then:
 - Use the R-script in the helpers folder to generate the necessary train, dev, and test sets.
 - Subsequently, use the train_* files to train and fine-tune the individual models discussed in the report. Start with the train_embeddings file.
 - Finally, use the test_* notebooks to evaluate the models on the test-set.
