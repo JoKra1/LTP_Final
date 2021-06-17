@@ -40,7 +40,7 @@ class TwitterDataset(Dataset):
                 """
                 row == line -> line[1] content, line[0] label
                 """
-                tokens = tokenizer.tokenize(line[1]) # Byte-pair
+                tokens = tokenizer.tokenize(line[1]) # Wordpiece (see Devlin et al. 2018)
 
                 if len(tokens) == 0:
                     """

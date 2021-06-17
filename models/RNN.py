@@ -7,9 +7,9 @@ import torch.nn.functional as F
 class RNN(nn.Module):
 	"""
 	For the RNN we rely to a large degree on the architecture provided
-	in the NLP pytorch book chapter 6 that was made available during
-	the course. However, instead of using two linear layers on top we
-	use a single one.
+	in the NLP pytorch book chapter 6 (However, instead of using two
+	linear layers on top we use a single one.) that was made available during
+	the course and on examples in the pytorch forum (see references below).
 	"""
 	def __init__(self, input_dim, output_dim,
 				 padding_idx=0,gru_dim=250,embedding_size=768,

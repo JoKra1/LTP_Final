@@ -158,11 +158,17 @@ write.csv(val,"../data/val_merged.csv",sep=",",row.names = F)
 write.csv(test,"../data/test_merged.csv",sep=",",row.names = F)
 
 summary(train)
+nrow(train)
 summary(val)
 summary(test)
 
-summary(nchar(train$content))
+
+summary(nchar(train$content[nchar(train$content) > 0]))
+sd(nchar(train$content[nchar(train$content) > 0]))
 summary(train$account_category)
+hist(nchar(train$content[nchar(train$content) > 0]),breaks=100,
+          main="Histogram of number of characters in train set",
+          xlab="Number of characters in tweet",col="blue")
 
 # write eng train
 write.csv(train_eng,"../data/eng_train.csv",row.names = F)

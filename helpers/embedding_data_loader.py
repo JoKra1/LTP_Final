@@ -32,5 +32,5 @@ class EmbeddingDataset:
 
             See: https://bpemb.h-its.org/
             """
-            tokens = self.tokenizer.tokenize(line) # Byte-pair
+            tokens = self.tokenizer.tokenize(line) # Wordpiece (see Devlin et al. 2018)
             yield tokens
