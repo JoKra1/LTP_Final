@@ -107,7 +107,7 @@ if __name__ == "__main__":
 	"""
 	For the tokenizer loading and data loading/pre-processing 
 	we rely on the steps in the code for lab 4, since we adapted the
-	dataloading parts to work four our case here as well.
+	dataloading parts to work for our case here as well.
 	"""
 	
 	print(device)

@@ -25,7 +25,7 @@ def evaluate(model, dataset):
 	"""
 	We used EC's submission for lab 4 as a starting point.
 	We added the masking, which was recommended for the
-	sequence classificatio model (see references below).
+	sequence classification model (see references below).
 	"""
 	model.eval()
 	with torch.no_grad():
@@ -37,11 +37,11 @@ def evaluate(model, dataset):
 			# mask
 			"""
 			Masking for the attention mechanisms as also done in the
-            transformer examples linked below.
-
-            Source: https://huggingface.co/transformers/custom_datasets.html#fine-tuning-with-native-pytorch-tensorflow
-            and: https://huggingface.co/transformers/model_doc/bert.html#transformers.BertForSequenceClassification
-            and: https://huggingface.co/transformers/glossary.html#attention-mask
+			transformer examples linked below.
+			
+			Source: https://huggingface.co/transformers/custom_datasets.html#fine-tuning-with-native-pytorch-tensorflow
+			and: https://huggingface.co/transformers/model_doc/bert.html#transformers.BertForSequenceClassification
+			and: https://huggingface.co/transformers/glossary.html#attention-mask
 			"""
 			mask = torch.zeros_like(data)
 			mask[data != 0] = 1
@@ -67,7 +67,7 @@ def train(model, train_data, val_data, epochs, sub_evals=None):
 	"""
 	We used EC's submission for lab 4 as a starting point.
 	We added the masking, which was recommended for the
-	sequence classificatio model (see references below).
+	sequence classification model (see references below).
 
 	Also we added sub-set evaluation routines that work for individual
 	languages.
@@ -98,11 +98,11 @@ def train(model, train_data, val_data, epochs, sub_evals=None):
 			# mask
 			"""
 			Masking for the attention mechanisms as also done in the
-            transformer examples linked below.
-
-            Source: https://huggingface.co/transformers/custom_datasets.html#fine-tuning-with-native-pytorch-tensorflow
-            and: https://huggingface.co/transformers/model_doc/bert.html#transformers.BertForSequenceClassification
-            and: https://huggingface.co/transformers/glossary.html#attention-mask
+			transformer examples linked below.
+			
+			Source: https://huggingface.co/transformers/custom_datasets.html#fine-tuning-with-native-pytorch-tensorflow
+			and: https://huggingface.co/transformers/model_doc/bert.html#transformers.BertForSequenceClassification
+			and: https://huggingface.co/transformers/glossary.html#attention-mask
 			"""
 
 			mask = torch.zeros_like(data)
