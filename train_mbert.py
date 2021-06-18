@@ -147,7 +147,7 @@ if __name__ == "__main__":
 	For the tokenizer loading, data loading/pre-processing 
 	and initialization of the untrained/pre-trained models we
 	rely on the steps in the code for lab 4, since we adapted the
-	dataloading parts to work four our case here as well.
+	dataloading parts to work for our case here as well.
 	"""
 	print(device)
 	torch.manual_seed(0)
